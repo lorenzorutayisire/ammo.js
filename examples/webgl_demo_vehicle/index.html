@@ -1,60 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>Ammo.js Raycast vehicle demo</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-        <style>
-            body {
-                color: #61443e;
-                font-family:Monospace;
-                font-size:13px;
-                text-align:center;
 
-                background-color: #bfd1e5;
-                margin: 0px;
-                overflow: hidden;
-            }
-			#speedometer {
-				color: #ffffff;
-				background-color: #990000;
-				position: absolute;
-				bottom: 0px;
-				padding: 5px;
-			}
-            #info {
-                position: absolute;
-                top: 0px; width: 100%;
-                padding: 5px;
-            }
+<head>
+	<title>Ammo.js Raycast vehicle demo</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<style>
+		body {
+			color: #61443e;
+			font-family: Monospace;
+			font-size: 13px;
+			text-align: center;
 
-            a {
+			background-color: #bfd1e5;
+			margin: 0px;
+			overflow: hidden;
+		}
 
-                color: #a06851;
-            }
+		#speedometer {
+			color: #ffffff;
+			background-color: #990000;
+			position: absolute;
+			bottom: 0px;
+			padding: 5px;
+		}
 
-        </style>
-    </head>
-    <body>
-        <div id="container"><br /><br /><br /><br /><br />Loading...</div>
-		<div id="speedometer">0.0 km/h</div>
-        <div id="info">Ammo.js Raycast vehicle demo<br>Press W,A,S,D to move.</div>
+		#info {
+			position: absolute;
+			top: 0px;
+			width: 100%;
+			padding: 5px;
+		}
 
-		<script src="../../builds/ammo.js"></script>
+		a {
 
-        <script src="../js/three/three.min.js"></script>
-        <script src="../js/three/OrbitControls.js"></script>
-        <script src="../js/three/Detector.js"></script>
-        <script src="../js/three/stats.min.js"></script>
+			color: #a06851;
+		}
+	</style>
+</head>
 
-        <script>
+<body>
+	<div id="container"><br /><br /><br /><br /><br />Loading...</div>
+	<div id="speedometer">0.0 km/h</div>
+	<div id="info">Ammo.js Raycast vehicle demo<br>Press W,A,S,D to move.</div>
 
-		Ammo().then(function(Ammo) {
+	<script src="../../builds/ammo.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r122/three.min.js"></script>
+	<script src="../js/three/OrbitControls.js"></script>
+	<script src="../js/three/GLTFLoader.js"></script>
+	<script src="../js/three/Detector.js"></script>
+	<script src="../js/three/stats.min.js"></script>
+	<script src="../js/three/AmmoDebugDrawer.js"></script>
+
+	<script>
+
+		Ammo().then(function (Ammo) {
 
 			// Detects webgl
-			if ( ! Detector.webgl ) {
+			if (!Detector.webgl) {
 				Detector.addGetWebGLMessage();
-				document.getElementById( 'container' ).innerHTML = "";
+				document.getElementById('container').innerHTML = "";
 			}
 
 			// - Global variables -
@@ -82,59 +88,62 @@
 			var timeNextSpawn = time + objectTimePeriod;
 			var maxNumObjects = 30;
 
+			let vehicle;
+
 			// Keybord actions
 			var actions = {};
 			var keysActions = {
-				"KeyW":'acceleration',
-				"KeyS":'braking',
-				"KeyA":'left',
-				"KeyD":'right'
+				"KeyW": 'acceleration',
+				"KeyS": 'braking',
+				"KeyA": 'left',
+				"KeyD": 'right'
 			};
 
 			// - Functions -
 
 			function initGraphics() {
 
-				container = document.getElementById( 'container' );
-				speedometer = document.getElementById( 'speedometer' );
+				container = document.getElementById('container');
+				speedometer = document.getElementById('speedometer');
 
 				scene = new THREE.Scene();
 
-				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 );
+
+				camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.2, 2000);
 				camera.position.x = -4.84;
 				camera.position.y = 4.39;
 				camera.position.z = -35.11;
-				camera.lookAt( new THREE.Vector3( 0.33, -0.40, 0.85 ) );
-				controls = new THREE.OrbitControls( camera );
+				camera.lookAt(new THREE.Vector3(0.33, -0.40, 0.85));
+				controls = new THREE.OrbitControls(camera);
 
-				renderer = new THREE.WebGLRenderer({antialias:true});
-				renderer.setClearColor( 0xbfd1e5 );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer = new THREE.WebGLRenderer({ antialias: true });
+				renderer.setClearColor(0xbfd1e5);
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(window.innerWidth, window.innerHeight);
 
-				var ambientLight = new THREE.AmbientLight( 0x404040 );
-				scene.add( ambientLight );
+				var ambientLight = new THREE.AmbientLight(0xffffff);
+				scene.add(ambientLight);
 
-				var dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-				dirLight.position.set( 10, 10, 5 );
-				scene.add( dirLight );
+				var dirLight = new THREE.DirectionalLight(0xffffff, 1);
+				dirLight.position.set(10, 10, 5);
+				scene.add(dirLight);
 
-				materialDynamic = new THREE.MeshPhongMaterial( { color:0xfca400 } );
-				materialStatic = new THREE.MeshPhongMaterial( { color:0x999999 } );
-				materialInteractive=new THREE.MeshPhongMaterial( { color:0x990000 } );
+				materialDynamic = new THREE.MeshPhongMaterial({ color: 0xfca400 });
+				materialStatic = new THREE.MeshPhongMaterial({ color: 0x999999 });
+				materialInteractive = new THREE.MeshPhongMaterial({ color: 0x990000 });
 
 				container.innerHTML = "";
 
-				container.appendChild( renderer.domElement );
+				container.appendChild(renderer.domElement);
 
 				stats = new Stats();
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';
-				container.appendChild( stats.domElement );
+				container.appendChild(stats.domElement);
 
-				window.addEventListener( 'resize', onWindowResize, false );
-				window.addEventListener( 'keydown', keydown);
-				window.addEventListener( 'keyup', keyup);
+				window.addEventListener('resize', onWindowResize, false);
+				window.addEventListener('keydown', keydown);
+				window.addEventListener('keyup', keyup);
 			}
 
 			function onWindowResize() {
@@ -142,35 +151,67 @@
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize(window.innerWidth, window.innerHeight);
 
+			}
+
+			function initDebug() {
+				let debugVertices = new Float32Array(DefaultBufferSize);
+				let debugColors = new Float32Array(DefaultBufferSize);
+				debugGeometry = new THREE.BufferGeometry();
+				debugGeometry.addAttribute("position", new THREE.BufferAttribute(debugVertices, 3).setDynamic(true));
+				debugGeometry.addAttribute("color", new THREE.BufferAttribute(debugColors, 3).setDynamic(true));
+				let debugMaterial = new THREE.LineBasicMaterial({ vertexColors: true });
+				let debugMesh = new THREE.LineSegments(debugGeometry, debugMaterial);
+				debugMesh.frustumCulled = false;
+				scene.add(debugMesh);
+				debugDrawer = new AmmoDebugDrawer(null, debugVertices, debugColors, physicsWorld);
+				debugDrawer.enable();
 			}
 
 			function initPhysics() {
 
 				// Physics configuration
 				collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-				dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+				dispatcher = new Ammo.btCollisionDispatcher(collisionConfiguration);
 				broadphase = new Ammo.btDbvtBroadphase();
 				solver = new Ammo.btSequentialImpulseConstraintSolver();
-				physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-				physicsWorld.setGravity( new Ammo.btVector3( 0, -9.82, 0 ) );
+				physicsWorld = new Ammo.btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
+				physicsWorld.setGravity(new Ammo.btVector3(0, -9.82, 0));
+			}
+
+			function updateDebugDrawer() {
+				if (debugDrawer) {
+					if (debugDrawer.index !== 0) {
+						debugGeometry.attributes.position.needsUpdate = true;
+						debugGeometry.attributes.color.needsUpdate = true;
+					}
+
+					debugGeometry.setDrawRange(0, debugDrawer.index);
+				}
+
+				debugDrawer.update();
 			}
 
 			function tick() {
-				requestAnimationFrame( tick );
+				requestAnimationFrame(tick);
 				var dt = clock.getDelta();
+					
+				physicsWorld.stepSimulation(dt, 20, 1 / 240.0);
 				for (var i = 0; i < syncList.length; i++)
 					syncList[i](dt);
-				physicsWorld.stepSimulation( dt, 10 );
-				controls.update( dt );
-				renderer.render( scene, camera );
+
+				controls.update(dt);
+
+				updateDebugDrawer();
+				renderer.render(scene, camera);
+
 				time += dt;
 				stats.update();
 			}
 
 			function keyup(e) {
-				if(keysActions[e.code]) {
+				if (keysActions[e.code]) {
 					actions[keysActions[e.code]] = false;
 					e.preventDefault();
 					e.stopPropagation();
@@ -178,7 +219,7 @@
 				}
 			}
 			function keydown(e) {
-				if(keysActions[e.code]) {
+				if (keysActions[e.code]) {
 					actions[keysActions[e.code]] = true;
 					e.preventDefault();
 					e.stopPropagation();
@@ -191,13 +232,13 @@
 				var shape = new THREE.BoxGeometry(w, l, h, 1, 1, 1);
 				var geometry = new Ammo.btBoxShape(new Ammo.btVector3(w * 0.5, l * 0.5, h * 0.5));
 
-				if(!mass) mass = 0;
-				if(!friction) friction = 1;
+				if (!mass) mass = 0;
+				if (!friction) friction = 1;
 
 				var mesh = new THREE.Mesh(shape, material);
 				mesh.position.copy(pos);
 				mesh.quaternion.copy(quat);
-				scene.add( mesh );
+				scene.add(mesh);
 
 				var transform = new Ammo.btTransform();
 				transform.setIdentity();
@@ -215,7 +256,7 @@
 				//body.setRestitution(.9);
 				//body.setDamping(0.2, 0.2);
 
-				physicsWorld.addRigidBody( body );
+				physicsWorld.addRigidBody(body);
 
 				if (mass > 0) {
 					body.setActivationState(DISABLE_DEACTIVATION);
@@ -239,7 +280,7 @@
 				var t = new THREE.CylinderGeometry(radius, radius, width, 24, 1);
 				t.rotateZ(Math.PI / 2);
 				var mesh = new THREE.Mesh(t, materialInteractive);
-				mesh.add(new THREE.Mesh(new THREE.BoxGeometry(width * 1.5, radius * 1.75, radius*.25, 1, 1, 1), materialInteractive));
+				mesh.add(new THREE.Mesh(new THREE.BoxGeometry(width * 1.5, radius * 1.75, radius * .25, 1, 1, 1), materialInteractive));
 				scene.add(mesh);
 				return mesh;
 			}
@@ -249,6 +290,53 @@
 				var mesh = new THREE.Mesh(shape, materialInteractive);
 				scene.add(mesh);
 				return mesh;
+			}
+
+			function toBvhTriangleMesh(geometry) {
+				let triangleMesh = new Ammo.btTriangleMesh();
+
+				let a = new Ammo.btVector3();
+				let b = new Ammo.btVector3();
+				let c = new Ammo.btVector3();
+
+				const addTriangle = (ax, ay, az, bx, by, bz, cx, cy, cz) => {
+					a.setValue(ax, ay, az);
+					b.setValue(bx, by, bz);
+					c.setValue(cx, cy, cz);
+
+					triangleMesh.addTriangle(a, b, c, true);
+				}
+
+				let vertices = geometry.attributes.position.array;
+
+				if (geometry.index) {
+					// Indexed triangles
+					let indices = geometry.index.array;
+
+					for (let i = 0; i < indices.length; i += 3) {
+						let ai = indices[i] * 3;
+						let bi = indices[i + 1] * 3;
+						let ci = indices[i + 2] * 3;
+
+						addTriangle(
+							vertices[ai], vertices[ai + 1], vertices[ai + 2],
+							vertices[bi], vertices[bi + 1], vertices[bi + 2],
+							vertices[ci], vertices[ci + 1], vertices[ci + 2]
+						);
+					}
+				} else {
+					// Contigous triangles
+					for (let i = 0; i < vertices.length; i += 9) {
+						addTriangle(
+							vertices[i + 0], vertices[i + 1], vertices[i + 2],
+							vertices[i + 3], vertices[i + 4], vertices[i + 5],
+							vertices[i + 6], vertices[i + 7], vertices[i + 8]
+						);
+					}
+				}
+
+				let shape = new Ammo.btBvhTriangleMeshShape(triangleMesh, true, true);
+				return shape;
 			}
 
 			function createVehicle(pos, quat) {
@@ -276,7 +364,7 @@
 				var suspensionStiffness = 20.0;
 				var suspensionDamping = 2.3;
 				var suspensionCompression = 4.4;
-				var suspensionRestLength = 0.6;
+				var suspensionRestLength = 1;
 				var rollInfluence = 0.2;
 
 				var steeringIncrement = .04;
@@ -296,6 +384,7 @@
 				var body = new Ammo.btRigidBody(new Ammo.btRigidBodyConstructionInfo(massVehicle, motionState, geometry, localInertia));
 				body.setActivationState(DISABLE_DEACTIVATION);
 				physicsWorld.addRigidBody(body);
+				body.setCollisionFlags(8);
 				var chassisMesh = createChassisMesh(chassisWidth, chassisHeight, chassisLength);
 
 				// Raycast Vehicle
@@ -320,13 +409,13 @@
 				function addWheel(isFront, pos, radius, width, index) {
 
 					var wheelInfo = vehicle.addWheel(
-							pos,
-							wheelDirectionCS0,
-							wheelAxleCS,
-							suspensionRestLength,
-							radius,
-							tuning,
-							isFront);
+						pos,
+						wheelDirectionCS0,
+						wheelAxleCS,
+						suspensionRestLength,
+						radius,
+						tuning,
+						isFront);
 
 					wheelInfo.set_m_suspensionStiffness(suspensionStiffness);
 					wheelInfo.set_m_wheelsDampingRelaxation(suspensionDamping);
@@ -398,7 +487,12 @@
 					var tm, p, q, i;
 					var n = vehicle.getNumWheels();
 					for (i = 0; i < n; i++) {
+
+						let wheelInfo = vehicle.getWheelInfo(i);
+						let raycastInfo = wheelInfo.get_m_raycastInfo();
+
 						vehicle.updateWheelTransform(i, true);
+
 						tm = vehicle.getWheelTransformWS(i);
 						p = tm.getOrigin();
 						q = tm.getRotation();
@@ -414,10 +508,81 @@
 				}
 
 				syncList.push(sync);
+				return vehicle;
 			}
 
-			function createObjects() {
+			function printVec3(msg, v) {
+				console.log(msg, v.x(), v.y(), v.z());
+			}
 
+			function printWheel(i, wheelInfo) {
+				let raycastInfo = wheelInfo.get_m_raycastInfo();
+				console.log("i", i);
+				printVec3("m_contactNormalWS", raycastInfo.get_m_contactNormalWS());
+				console.log("m_suspensionLength", raycastInfo.get_m_suspensionLength());
+			}
+
+			function toBvhTriangleMeshShape(geometry) {
+				let triangleMesh = new Ammo.btTriangleMesh();
+
+				let a = new Ammo.btVector3();
+				let b = new Ammo.btVector3();
+				let c = new Ammo.btVector3();
+
+				const addTriangle = (ax, ay, az, bx, by, bz, cx, cy, cz) => {
+					a.setValue(ax, ay, az);
+					b.setValue(bx, by, bz);
+					c.setValue(cx, cy, cz);
+
+					triangleMesh.addTriangle(a, b, c, true);
+				}
+
+				let vertices = geometry.attributes.position.array;
+
+				if (geometry.index) {
+					// Indexed triangles
+					let indices = geometry.index.array;
+
+					for (let i = 0; i < indices.length; i += 3) {
+						let ai = indices[i] * 3;
+						let bi = indices[i + 1] * 3;
+						let ci = indices[i + 2] * 3;
+
+						addTriangle(
+							vertices[ai], vertices[ai + 1], vertices[ai + 2],
+							vertices[bi], vertices[bi + 1], vertices[bi + 2],
+							vertices[ci], vertices[ci + 1], vertices[ci + 2]
+						);
+					}
+				} else {
+					// Contigous triangles
+					for (let i = 0; i < vertices.length; i += 9) {
+						addTriangle(
+							vertices[i + 0], vertices[i + 1], vertices[i + 2],
+							vertices[i + 3], vertices[i + 4], vertices[i + 5],
+							vertices[i + 6], vertices[i + 7], vertices[i + 8]
+						);
+					}
+				}
+
+				let shape = new Ammo.btBvhTriangleMeshShape(triangleMesh, true, true);
+
+				return shape;
+			};
+
+			function createRigidBody(transform, shape, mass) {
+				let motionState = new Ammo.btDefaultMotionState(transform);
+
+				let localInertia = new Ammo.btVector3(0, 0, 0);
+				shape.calculateLocalInertia(mass, localInertia);
+
+				let bodyInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
+				let body = new Ammo.btRigidBody(bodyInfo);
+
+				return body;
+			};
+
+			function createObjects() {
 				createBox(new THREE.Vector3(0, -0.5, 0), ZERO_QUATERNION, 75, 1, 75, 0, 2);
 
 				var quaternion = new THREE.Quaternion(0, 0, 0, 1);
@@ -431,17 +596,152 @@
 					for (var i = 0; i < nh; i++)
 						createBox(new THREE.Vector3(size * j - (size * (nw - 1)) / 2, size * i, 10), ZERO_QUATERNION, size, size, size, 10);
 
-				createVehicle(new THREE.Vector3(0, 4, -20), ZERO_QUATERNION);
 			}
 
 			// - Init -
 			initGraphics();
 			initPhysics();
-			createObjects();
+			initDebug();
+
+			//createObjects();
+
+			// let importantAngles = [ 4 / 5 * Math.PI ];
+
+			let quaternion = new THREE.Quaternion();
+			//quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI * 9 / 10);
+			vehicle = createVehicle(new THREE.Vector3(0, 20, -20), quaternion);
 			tick();
 
+
+
+			let loader = new GLTFLoader();
+			loader.load(
+				'../assets/racor.glb',
+				function (gltf) {
+					scene.add(gltf.scene);
+
+
+					let terrain = null;
+					for (let child of gltf.scene.children) {
+						if (child.userData.type === 'terrain')
+							terrain = child;
+					}
+
+					let transform = new Ammo.btTransform();
+					transform.setIdentity();
+
+					let terrainObj = createRigidBody(transform, toBvhTriangleMesh(terrain.geometry), 0);
+					physicsWorld.addRigidBody(terrainObj);
+
+					const cross = (a, b, target) => {
+						target.setValue(
+							a.y() * b.z() - a.z() * b.y(),
+							a.z() * b.x() - a.x() * b.z(),
+							a.x() * b.y() - a.y() * b.x()
+						);
+					}
+
+
+
+					let hlTriangles = {};
+
+					const addTriangle = (a, b, c) => {
+						let geometry = new THREE.Geometry();
+						geometry.vertices.push(
+							new THREE.Vector3(a.x(), a.y(), a.z()),
+							new THREE.Vector3(b.x(), b.y(), b.z()),
+							new THREE.Vector3(c.x(), c.y(), c.z())
+						);
+						geometry.faces.push(new THREE.Face3(0, 1, 2));
+
+						let mesh = new THREE.Mesh(
+							geometry,
+							new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide })
+						);
+
+						scene.add(mesh);
+					}
+
+					const addArrow = (_o, _dir, color = 0xff0000) => {
+						const dir = new THREE.Vector3(_dir.x(), _dir.y(), _dir.z());
+						dir.normalize();
+
+						const origin = new THREE.Vector3(_o.x(), _o.y(), _o.z());
+						const arrowHelper = new THREE.ArrowHelper(dir, origin, 1, color);
+						scene.add(arrowHelper);
+					}
+
+					let tmpTriangleShape = new Ammo.btTriangleShape();
+					let tmpTerrainNormal = new Ammo.btVector3();
+
+					const contactAddedCallback = (cp, colObj0Wrap, partId0, index0, colObj1Wrap, partId1, index1) => {
+						cp = Ammo.wrapPointer(cp, Ammo.btManifoldPoint)
+						colObj0Wrap = Ammo.wrapPointer(colObj0Wrap, Ammo.btCollisionObjectWrapper);
+						colObj1Wrap = Ammo.wrapPointer(colObj1Wrap, Ammo.btCollisionObjectWrapper);
+
+						let colObj0 = colObj0Wrap.getCollisionObject();
+						let colObj1 = colObj1Wrap.getCollisionObject();
+
+						let index =
+							Ammo.compare(terrainObj, colObj0) ? index0 :
+							Ammo.compare(terrainObj, colObj1) ? index1 :
+							undefined;
+
+						let terrainCollisionPoint =
+							Ammo.compare(terrainObj, colObj0) ? cp.get_m_positionWorldOnA() :
+							Ammo.compare(terrainObj, colObj1) ? cp.get_m_positionWorldOnB() :
+							undefined;
+
+						let isTerrain = index !== undefined;
+
+						if (isTerrain) {
+							let bvhTriangleMeshShape = Ammo.castObject(terrainObj.getCollisionShape(), Ammo.btBvhTriangleMeshShape);
+							let success = bvhTriangleMeshShape.getTriangleAt(terrainCollisionPoint, tmpTriangleShape);
+
+							if (success) {
+
+								// Gets the terrain's triangle corresponding to where the object collided.
+								let v0 = tmpTriangleShape.getVertexPtr(0);
+								let v1 = tmpTriangleShape.getVertexPtr(1);
+								let v2 = tmpTriangleShape.getVertexPtr(2);
+
+								// Calculates the normal for that triangle.
+								let d0 = v1.op_sub(v0);
+								let d1 = v2.op_sub(v0);
+
+								cross(d0, d1, tmpTerrainNormal);
+								tmpTerrainNormal.normalize();
+
+								// DEBUG visualize the normal.
+								//addArrow(terrainCollisionPoint, tmpTerrainNormal);
+
+								let normalWorldOnB = cp.get_m_normalWorldOnB();
+
+								// Calculates the normal dot face, if the result is negative then the collision is pushing the object inside the terrain.
+								let nDotF = tmpTerrainNormal.dot(normalWorldOnB);
+								if (nDotF <= 0) {
+									//normalWorldOnB.op_add(tmpTerrainNormal);
+									cp.set_m_normalWorldOnB(normalWorldOnB.op_mul(nDotF));
+
+								}
+							}
+
+							return false;
+						}
+					};
+
+					Ammo.CF_CUSTOM_MATERIAL_CALLBACK = 8;
+					terrainObj.setCollisionFlags(Ammo.CF_CUSTOM_MATERIAL_CALLBACK);
+
+					let contactAddedCallbackPtr = Ammo.addFunction(contactAddedCallback);
+					physicsWorld.setContactAddedCallback(contactAddedCallbackPtr);
+
+					return false;
+				}
+			);
 		});
 
-        </script>
-    </body>
+	</script>
+</body>
+
 </html>

@@ -151,7 +151,7 @@ interface btCollisionObject {
 [NoDelete]
 interface btCollisionObjectWrapper {
   [Const, Ref] btTransform getWorldTransform();
-  [Const] btCollisionObject getCollisionObject();
+sbject();
   [Const] btCollisionShape getCollisionShape();
 };
 
@@ -427,6 +427,13 @@ interface btIndexedMeshArray {
   [Const, Ref] btIndexedMesh at(long n);
 };
 
+
+interface btTriangleShape {
+  void btTriangleShape();
+
+  [Ref] btVector3 getVertexPtr(long index);
+};
+
 interface btTriangleMesh {
   void btTriangleMesh(optional boolean use32bitIndices, optional boolean use4componentVertices);
   void addTriangle([Const, Ref] btVector3 vertex0, [Const, Ref] btVector3 vertex1, [Const, Ref] btVector3 vertex2, optional boolean removeDuplicateVertices);
@@ -465,6 +472,8 @@ btTriangleMeshShape implements btConcaveShape;
 
 interface btBvhTriangleMeshShape {
   void btBvhTriangleMeshShape(btStridingMeshInterface meshInterface, boolean useQuantizedAabbCompression, optional boolean buildBvh);
+
+  boolean getTriangleAt([Const, Ref] btVector3 point, [Ref] btTriangleShape triangle);
 };
 btBvhTriangleMeshShape implements btTriangleMeshShape;
 

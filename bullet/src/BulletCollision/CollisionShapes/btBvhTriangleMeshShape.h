@@ -21,6 +21,8 @@ subject to the following restrictions:
 #include "LinearMath/btAlignedAllocator.h"
 #include "btTriangleInfoMap.h"
 
+#include "btTriangleShape.h"
+
 ///The btBvhTriangleMeshShape is a static-triangle mesh shape, it can only be used for fixed/non-moving objects.
 ///If you required moving concave triangle meshes, it is recommended to perform convex decomposition
 ///using HACD, see Bullet/Demos/ConvexDecompositionDemo. 
@@ -64,6 +66,8 @@ public:
 	void performConvexcast (btTriangleCallback* callback, const btVector3& boxSource, const btVector3& boxTarget, const btVector3& boxMin, const btVector3& boxMax);
 
 	virtual void	processAllTriangles(btTriangleCallback* callback,const btVector3& aabbMin,const btVector3& aabbMax) const;
+
+	bool getTriangleAt(btVector3 const& point, btTriangleShape& triangle) const; 
 
 	void	refitTree(const btVector3& aabbMin,const btVector3& aabbMax);
 

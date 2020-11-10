@@ -149,7 +149,7 @@ void	btBvhTriangleMeshShape::performRaycast (btTriangleCallback* callback, const
 			}
 
 			/* Perform ray vs. triangle collision here */
-			m_callback->processTriangle(m_triangle,nodeSubPart,nodeTriangleIndex);
+			m_callback->processTriangle(m_triangle, nodeSubPart, nodeTriangleIndex);
 			m_meshInterface->unLockReadOnlyVertexBase(nodeSubPart);
 		}
 	};
@@ -326,6 +326,36 @@ void	btBvhTriangleMeshShape::processAllTriangles(btTriangleCallback* callback,co
 #endif//DISABLE_BVH
 
 
+}
+
+bool btBvhTriangleMeshShape::getTriangleAt(btVector3 const& point, btTriangleShape& triangle) const
+{
+	struct MyTriangleCallback : public btTriangleCallback
+	{
+		btTriangleShape* m_triangle;
+		bool m_found;
+
+		MyTriangleCallback(btTriangleShape& triangle) :
+			m_triangle(&triangle),
+			m_found(false)
+		{}
+		~MyTriangleCallback() {}
+
+		void processTriangle(btVector3 triangle[3], int partId, int triangleIndex)
+		{
+			for (int i = 2; i >= 0; i--)
+				m_triangle->m_vertices1[i] = triangle[i];
+			m_found = true;
+		}
+	};
+
+	MyTriangleCallback callback(triangle);
+
+	btVector3 const& aabbMin = point;
+	btVector3 aabbMax = point + btVector3(1e-7, 1e-7, 1e-7);
+	this->processAllTriangles(&callback, aabbMin, aabbMax);
+
+	return callback.m_found;
 }
 
 void   btBvhTriangleMeshShape::setLocalScaling(const btVector3& scaling)
